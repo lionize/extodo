@@ -5,31 +5,23 @@ defmodule Todo.Server do
     GenServer.start_link(__MODULE__, nil)
   end
 
-  def server_processes(pid, name) do
-    GenServer.call(pid, {:get_process, name})
+  def entries(pid, date) do
+    GenServer.call(pid, {:entries, date})
   end
 
-  def process_names(pid) do
-    GenServer.call(pid, :process_names)
+  def add_entry(pid, entry) do
+    GenServer.cast(pid, {:add_entry, entry})
   end
 
   def init(_) do
-    {:ok, Map.new}
+    {:ok, Todo.List.new}
   end
 
-  def handle_call({:get_process, name}, _from, state) do
-    case Map.get(state, name) do
-      pid ->
-        {:reply, pid, state}
-
-      _ ->
-        list = Todo.List.new
-        new_state = Map.put(state, name, list)
-        {:reply, list, new_state}
-    end
+  def handle_call({:entries, date}, _, list) do
+    {:reply, Todo.List.entries(list, date), list}
   end
 
-  def handle_call(:process_names, _from, state) do
-    {:reply, Map.keys(state), state}
+  def handle_cast({:add_entry, entry}, list) do
+    {:noreply, Todo.List.add_entry(list, entry)}
   end
 end
